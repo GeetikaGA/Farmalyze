@@ -99,6 +99,21 @@ class DiseaseClassifier:
         image_array = np.array(image)
         quality = assess_image_quality(image_array)
 
+        if quality is None:
+            # Defensive guard: this should never happen since assess_image_quality
+            # always returns a dict. If you hit this log line, you have a stale
+            # __pycache__ or an unexpected code path — clear backend/**/__pycache__
+            # and restart the server.
+            logger.error(
+                "assess_image_quality() returned None instead of a dict — "
+                "likely a stale __pycache__. Clear backend/**/__pycache__ and restart."
+            )
+            quality = {
+                "acceptable": False,
+                "score": 0.0,
+                "message": "Image quality check failed unexpectedly. Please try again.",
+            }
+
         if not quality["acceptable"]:
             return {
                 "skipped_inference": True,
